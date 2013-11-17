@@ -1,5 +1,6 @@
 (function() {
     var formidable, fs, qs, send, start, receive;
+    var stack = [];
 
     qs = require("querystring");
 
@@ -21,7 +22,7 @@
     noah = function(response, request) {
 	var form;
 	console.log("Request handler 'send' was called");
-	form = new formidable.IncomingForm();
+	/*form = new formidable.IncomingForm();
 	console.log("about to parse");
 	form.parse(request, function(error, fields, files) {
 		console.log("parsing done");
@@ -31,13 +32,25 @@
 			    return fs.rename(files.noah.path, "./test.txt");
 			}
 		    });
+		    });*/
+	var body = "";
+	request.on('data', function (chunk) {
+		body += chunk;
 	    });
-	
-	response.writeHead(200, {
-		"Content-Type": 'text/html'
-		    });
-	response.write("received text: <br/> <a href='/shadia'>The file you sent me</a> <br/>");
-	response.write("the json I will send: <br/> <a href='/gen'>The json I will send</a>");
+	request.on('end', function () {
+		console.log('POSTed: ' + body);
+		response.writeHead(200);
+		//response.end(postHTML);
+		response.writeHead(200, {
+			"Content-Type": 'text/html'
+			    });
+		response.write("received text: <br/> <a href='/shadia'>The file you sent me</a> <br/>");
+		response.write("the json I will send: <br/> <a href='/gen'>The json I will send</a>");
+		console.log(JSON.parse(body));
+	    });
+	response.end(
+		     
+		     );
 
 	return response.end();
 	
@@ -53,6 +66,7 @@
 		    response.write("WTF" + error + " \n");
 		    return response.end();
 		} else {
+		    console.log("response");
 		    response.writeHead(200, {
 			    "Content-Type": 'text/plain'
 				});
@@ -69,7 +83,7 @@
     
     gen = function(response){
 	console.log("Request handler for 'gen' was called.");
-	return fs.readFile("./test.txt", "binary", function(error, file) {
+	var str =  fs.readFile("./test.txt", "binary", function(error, file) {
 		if (error) {
 		    response.writeHead(500, {
 			    "Content-Type": 'text/plain'
@@ -77,13 +91,31 @@
 		    response.write("infinite tears " + error + " \n");
 		    return response.end();
 		} else {
-		    response.writeHead(200, {
+		    
+		    /*response.writeHead(200, {
 			    "Content-Type": 'text/plain'
 				});
 		    response.write(file, "binary");
-		    return response.end();
+		    return response.end();*/
 		}
 	    });
+	var msg = JSON.parse(str);
+	var index = 0;
+	var lowestID = 0;
+	while (lowestID == 0){
+	    lowestID = lowestJobID(stack, index);
+	    index++;
+	    
+	}
+	msg.JobID = lowestID;
+	msg.TimeStamp = Number(new Date());
+	
+	response.writeHead(200, {
+		"Content-Type": 'text/plain'
+		    });
+	response.write(str, "binary");
+	return response.end();
+	
     }
 
     exports.start = start;
@@ -95,3 +127,23 @@
     exports.gen = gen;
 
 }).call(this);
+
+function lowestJobID(stack, index){
+
+    if (index > stack.length) {
+	return 1;
+    }
+
+    var ind = 0;
+    var jobId = stack[ind];
+    while(jobId != index){
+	ind++;
+	if(ind > stack.length){
+	    return 1;
+	}
+	jobId = stack[ind];
+    }
+
+    return 0;
+
+}
