@@ -1,6 +1,9 @@
+var jsonbody = "";
+var stack = [];
 (function() {
     var formidable, fs, qs, send, start, receive;
-    var stack = [];
+    //var stack = [];
+    //var jsonbody = "";
 
     qs = require("querystring");
 
@@ -22,23 +25,13 @@
     noah = function(response, request) {
 	var form;
 	console.log("Request handler 'send' was called");
-	/*form = new formidable.IncomingForm();
-	console.log("about to parse");
-	form.parse(request, function(error, fields, files) {
-		console.log("parsing done");
-		return fs.rename(files.noah.path, "./test.txt", function(err) {
-			if (err) {
-			    fs.unlink("./test.txt");
-			    return fs.rename(files.noah.path, "./test.txt");
-			}
-		    });
-		    });*/
-	var body = "";
+	
+	//var body = "";
 	request.on('data', function (chunk) {
-		body += chunk;
+		jsonbody += chunk;
 	    });
 	request.on('end', function () {
-		console.log('POSTed: ' + body);
+		console.log('POSTed: ' + jsonbody);
 		response.writeHead(200);
 		//response.end(postHTML);
 		response.writeHead(200, {
@@ -46,9 +39,11 @@
 			    });
 		response.write("received text: <br/> <a href='/shadia'>The file you sent me</a> <br/>");
 		response.write("the json I will send: <br/> <a href='/gen'>The json I will send</a>");
-		console.log(JSON.parse(body));
+		//console.log(JSON.parse(jsonbody));
+		gen()
 	    });
 	response.end(
+		     //shadia()
 		     
 		     );
 
@@ -57,49 +52,17 @@
     };
 
     shadia = function(response) {
+	
 	console.log("Request handler 'shadia' was called.");
-	return fs.readFile("./test.txt", "binary", function(error, file) {	
-		if (error) {
-		    response.writeHead(500, {
-			    "Content-Type": 'text/plain'
-				});
-		    response.write("WTF" + error + " \n");
-		    return response.end();
-		} else {
-		    console.log("response");
-		    response.writeHead(200, {
-			    "Content-Type": 'text/plain'
-				});
-		    response.write(file, "binary");
-		    /*		    response.writeHead(200, {
-			    "Content-Type": 'text/html'
-				});
-		    response.write("the json I will send: <br/> <a href='/gen'>The json I will send</a>");
-		    */return response.end();
-		}
-		});
+	console.log("shadia's shit");
+	
+	var close = within1000feet();
 	
     };
     
     gen = function(response){
 	console.log("Request handler for 'gen' was called.");
-	var str =  fs.readFile("./test.txt", "binary", function(error, file) {
-		if (error) {
-		    response.writeHead(500, {
-			    "Content-Type": 'text/plain'
-			});
-		    response.write("infinite tears " + error + " \n");
-		    return response.end();
-		} else {
-		    
-		    /*response.writeHead(200, {
-			    "Content-Type": 'text/plain'
-				});
-		    response.write(file, "binary");
-		    return response.end();*/
-		}
-	    });
-	var msg = JSON.parse(str);
+	var msg = JSON.parse(jsonbody);
 	var index = 0;
 	var lowestID = 0;
 	while (lowestID == 0){
@@ -107,15 +70,22 @@
 	    index++;
 	    
 	}
+	
 	msg.JobID = lowestID;
 	msg.TimeStamp = Number(new Date());
-	
-	response.writeHead(200, {
+
+	//console.log("gen shit");
+	console.log(msg);
+	if (1){
+	    console.log("josh is so unimpressive so noah probs hates him qq");
+	}
+	/*response.writeHead(200, {
 		"Content-Type": 'text/plain'
 		    });
-	response.write(str, "binary");
-	return response.end();
-	
+		    response.write(str, "binary");*/
+	//response.end();
+	//return response.end();
+	//console.log("infinite cries");
     }
 
     exports.start = start;
@@ -127,6 +97,29 @@
     exports.gen = gen;
 
 }).call(this);
+
+function within1000ft(current, list){
+    var closeby = [];
+    var R = 6371;
+    for (var i = 0; i list.length; i++){
+	if(Number(new Date()) - list[i].TimeStamp >= 10) {
+	    list.splice(i, 1);
+	    i--;
+	    continue;
+	} 
+	var xdist = (Number(current.Longitude) - Number(list[i].Longitude)).toRad();
+	var ydist = (Number(current.Latitude) - Number(list[i].Latitude)).toRad();
+	var lat2 = Number(current.Latitutde);
+	var lat1 = Number(list[i].Latitude);
+	var sinstuff = var a = Math.sin(ydist/2) * Math.sin(ydist/2) + Math.sin(xdist/2) * Math.sin(xdist/2) * Math.cos(lat1) * Math.cos(lat2); 
+	var arctanstuff = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+	var dist = R*c * 3280;
+	if (dist < 1000){
+	    closeby.push(list[i]);
+	}
+    }
+    return closeby;
+}
 
 function lowestJobID(stack, index){
 
